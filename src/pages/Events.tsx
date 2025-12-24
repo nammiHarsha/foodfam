@@ -28,10 +28,6 @@ type EventWithRSVP = {
   has_rsvped: boolean;
 };
 
-type EventWithRSVP = Event & {
-  rsvp_count: number;
-  has_rsvped: boolean;
-};
 
 const Events = () => {
   const { user, roles } = useAuth();
