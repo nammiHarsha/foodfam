@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut, Calendar, MessageSquare, LayoutDashboard, Utensils } from "lucide-react";
+import { Menu, X, User, LogOut, MessageSquare, LayoutDashboard, Utensils, Settings, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -103,6 +103,12 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/settings" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/my-trips" className="cursor-pointer">
                       <Utensils className="mr-2 h-4 w-4" />
                       My Trips
@@ -125,7 +131,7 @@ const Navbar = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="cursor-pointer">
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Shield className="mr-2 h-4 w-4" />
                           Admin
                         </Link>
                       </DropdownMenuItem>

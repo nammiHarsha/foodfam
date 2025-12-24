@@ -11,6 +11,7 @@ import Experiences from "./pages/Experiences";
 import ExperienceDetail from "./pages/ExperienceDetail";
 import CreateExperience from "./pages/CreateExperience";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import HostDashboard from "./pages/HostDashboard";
 import MyTrips from "./pages/MyTrips";
 import Messages from "./pages/Messages";
@@ -40,7 +41,9 @@ const App = () => (
             <Route path="/experiences/create" element={<CreateExperience />} />
             <Route path="/experiences/:id" element={<ExperienceDetail />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/profile" element={<Settings />} />
             <Route path="/host-dashboard" element={<HostDashboard />} />
             <Route path="/my-trips" element={<MyTrips />} />
             <Route path="/messages" element={<Messages />} />

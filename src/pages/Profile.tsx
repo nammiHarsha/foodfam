@@ -73,11 +73,17 @@ const ProfilePage = () => {
       // Fetch posts
       const { data: postsData } = await supabase
         .from("community_posts")
-        .select("*, author:profiles!community_posts_author_id_fkey(*)")
+        .select("*")
         .eq("author_id", profileId)
         .order("created_at", { ascending: false });
 
-      setPosts((postsData as unknown as CommunityPost[]) || []);
+      // Add author info to posts
+      const postsWithAuthor = (postsData || []).map(post => ({
+        ...post,
+        author: profileData,
+      }));
+
+      setPosts(postsWithAuthor as CommunityPost[]);
 
       // Fetch experiences (if host)
       const { data: experiencesData } = await supabase
@@ -92,11 +98,27 @@ const ProfilePage = () => {
       // Fetch reviews received
       const { data: reviewsData } = await supabase
         .from("reviews")
-        .select("*, reviewer:profiles!reviews_reviewer_id_fkey(*)")
+        .select("*")
         .eq("reviewed_user_id", profileId)
         .order("created_at", { ascending: false });
 
-      setReviews((reviewsData as unknown as Review[]) || []);
+      // Fetch reviewer profiles
+      if (reviewsData && reviewsData.length > 0) {
+        const reviewerIds = [...new Set(reviewsData.map(r => r.reviewer_id))];
+        const { data: reviewerProfiles } = await supabase
+          .from("profiles")
+          .select("*")
+          .in("user_id", reviewerIds);
+
+        const reviewerMap = new Map(reviewerProfiles?.map(p => [p.user_id, p]) || []);
+        const reviewsWithReviewers = reviewsData.map(review => ({
+          ...review,
+          reviewer: reviewerMap.get(review.reviewer_id) || null,
+        }));
+        setReviews(reviewsWithReviewers as Review[]);
+      } else {
+        setReviews([]);
+      }
 
       setLoading(false);
     };
