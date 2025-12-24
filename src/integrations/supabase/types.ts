@@ -14,15 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          booking_date: string | null
+          created_at: string
+          experience_id: string
+          guest_id: string
+          guests_count: number | null
+          host_id: string
+          id: string
+          message: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          booking_date?: string | null
+          created_at?: string
+          experience_id: string
+          guest_id: string
+          guests_count?: number | null
+          host_id: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string | null
+          created_at?: string
+          experience_id?: string
+          guest_id?: string
+          guests_count?: number | null
+          host_id?: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string
           comments_count: number | null
           content: string
           created_at: string
+          cuisine: string | null
+          experience_id: string | null
           id: string
           image_url: string | null
           likes_count: number | null
+          post_type: Database["public"]["Enums"]["post_type"] | null
+          region: string | null
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -30,9 +103,14 @@ export type Database = {
           comments_count?: number | null
           content: string
           created_at?: string
+          cuisine?: string | null
+          experience_id?: string | null
           id?: string
           image_url?: string | null
           likes_count?: number | null
+          post_type?: Database["public"]["Enums"]["post_type"] | null
+          region?: string | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -40,12 +118,25 @@ export type Database = {
           comments_count?: number | null
           content?: string
           created_at?: string
+          cuisine?: string | null
+          experience_id?: string | null
           id?: string
           image_url?: string | null
           likes_count?: number | null
+          post_type?: Database["public"]["Enums"]["post_type"] | null
+          region?: string | null
+          title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversation_participants: {
         Row: {
@@ -94,11 +185,80 @@ export type Database = {
         }
         Relationships: []
       }
+      event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          host_id: string
+          id: string
+          image_url: string | null
+          location: string | null
+          max_attendees: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          host_id: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_attendees?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          host_id?: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_attendees?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       experiences: {
         Row: {
           created_at: string
           cuisine_type: string | null
           description: string | null
+          experience_type: Database["public"]["Enums"]["experience_type"] | null
           host_id: string
           id: string
           image_url: string | null
@@ -106,6 +266,7 @@ export type Database = {
           location: string | null
           max_guests: number | null
           price_per_person: number | null
+          story: string | null
           title: string
           updated_at: string
         }
@@ -113,6 +274,9 @@ export type Database = {
           created_at?: string
           cuisine_type?: string | null
           description?: string | null
+          experience_type?:
+            | Database["public"]["Enums"]["experience_type"]
+            | null
           host_id: string
           id?: string
           image_url?: string | null
@@ -120,6 +284,7 @@ export type Database = {
           location?: string | null
           max_guests?: number | null
           price_per_person?: number | null
+          story?: string | null
           title: string
           updated_at?: string
         }
@@ -127,6 +292,9 @@ export type Database = {
           created_at?: string
           cuisine_type?: string | null
           description?: string | null
+          experience_type?:
+            | Database["public"]["Enums"]["experience_type"]
+            | null
           host_id?: string
           id?: string
           image_url?: string | null
@@ -134,6 +302,7 @@ export type Database = {
           location?: string | null
           max_guests?: number | null
           price_per_person?: number | null
+          story?: string | null
           title?: string
           updated_at?: string
         }
@@ -274,6 +443,44 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string | null
+          reason: string
+          reporter_id: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason: string
+          reporter_id: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reporter_id?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           content: string | null
@@ -308,6 +515,35 @@ export type Database = {
             columns: ["experience_id"]
             isOneToOne: false
             referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_posts: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -348,6 +584,13 @@ export type Database = {
     }
     Enums: {
       app_role: "host" | "traveler" | "foodie"
+      booking_status: "requested" | "approved" | "rejected"
+      experience_type: "meal" | "cooking_class" | "festival"
+      post_type:
+        | "cultural_dish"
+        | "recipe"
+        | "travel_memory"
+        | "experience_memory"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -476,6 +719,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["host", "traveler", "foodie"],
+      booking_status: ["requested", "approved", "rejected"],
+      experience_type: ["meal", "cooking_class", "festival"],
+      post_type: [
+        "cultural_dish",
+        "recipe",
+        "travel_memory",
+        "experience_memory",
+      ],
     },
   },
 } as const
