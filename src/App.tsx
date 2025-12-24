@@ -10,6 +10,17 @@ import Community from "./pages/Community";
 import Experiences from "./pages/Experiences";
 import ExperienceDetail from "./pages/ExperienceDetail";
 import CreateExperience from "./pages/CreateExperience";
+import Profile from "./pages/Profile";
+import HostDashboard from "./pages/HostDashboard";
+import MyTrips from "./pages/MyTrips";
+import Messages from "./pages/Messages";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
+import CreateEvent from "./pages/CreateEvent";
+import Admin from "./pages/Admin";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +39,18 @@ const App = () => (
             <Route path="/experiences" element={<Experiences />} />
             <Route path="/experiences/create" element={<CreateExperience />} />
             <Route path="/experiences/:id" element={<ExperienceDetail />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/host-dashboard" element={<HostDashboard />} />
+            <Route path="/my-trips" element={<MyTrips />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/create" element={<CreateEvent />} />
+            <Route path="/events/:id" element={<EventDetail />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/community-guidelines" element={<CommunityGuidelines />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

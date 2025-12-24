@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Calendar, MessageSquare, LayoutDashboard, Utensils } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -8,23 +8,41 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setUser(session?.user ?? null);
+        if (session?.user) {
+          const { data } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id);
+          setRoles(data?.map((r) => r.role) || []);
+        } else {
+          setRoles([]);
+        }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+        setRoles(data?.map((r) => r.role) || []);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -35,10 +53,12 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const isHost = roles.includes("host");
+
   const navLinks = [
     { href: "/experiences", label: "Experiences" },
+    { href: "/events", label: "Events" },
     { href: "/community", label: "Community" },
-    { href: "/about", label: "About" },
   ];
 
   return (
@@ -75,13 +95,43 @@ const Navbar = () => {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-trips" className="cursor-pointer">
+                      <Utensils className="mr-2 h-4 w-4" />
+                      My Trips
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/messages" className="cursor-pointer">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Messages
+                    </Link>
+                  </DropdownMenuItem>
+                  {isHost && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/host-dashboard" className="cursor-pointer">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          Host Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="cursor-pointer">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Admin
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
@@ -124,6 +174,42 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              {user && (
+                <>
+                  <Link
+                    to="/my-trips"
+                    className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Trips
+                  </Link>
+                  <Link
+                    to="/messages"
+                    className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Messages
+                  </Link>
+                  {isHost && (
+                    <>
+                      <Link
+                        to="/host-dashboard"
+                        className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Host Dashboard
+                      </Link>
+                      <Link
+                        to="/admin"
+                        className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Admin
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
                   <>
