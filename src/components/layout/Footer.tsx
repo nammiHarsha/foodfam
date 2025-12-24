@@ -27,35 +27,35 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/community" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Community
+                <Link to="/events" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Events
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
-                  About Us
+                <Link to="/community" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Community
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Legal & Support */}
           <div>
-            <h4 className="font-semibold mb-4">Support</h4>
+            <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2">
-              <li>
-                <Link to="/help" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link to="/safety" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Safety
-                </Link>
-              </li>
               <li>
                 <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
                   Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/community-guidelines" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Community Guidelines
                 </Link>
               </li>
             </ul>
