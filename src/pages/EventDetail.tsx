@@ -59,8 +59,6 @@ const EventDetail = () => {
         .select("*")
         .eq("user_id", eventData.host_id)
         .maybeSingle();
-        return;
-      }
 
       // Get RSVPs
       const { data: rsvps } = await supabase
