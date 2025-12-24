@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
+
 import { formatDistanceToNow } from "date-fns";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/seo/SEOHead";
@@ -176,7 +176,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <HelmetProvider>
+    <>
       <SEOHead
         title={`${profile.full_name || "User"} | FoodFam`}
         description={profile.bio || `Check out ${profile.full_name}'s profile on FoodFam`}
@@ -389,7 +389,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </Layout>
-    </HelmetProvider>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -113,7 +113,7 @@ const Auth = () => {
   };
 
   return (
-    <HelmetProvider>
+    <>
       <SEOHead
         title={isSignUp ? "Join FoodFam" : "Sign In"}
         description="Join the global community of food lovers and start your culinary journey."
@@ -239,7 +239,7 @@ const Auth = () => {
           </div>
         </div>
       </div>
-    </HelmetProvider>
+    </>
   );
 };
 
