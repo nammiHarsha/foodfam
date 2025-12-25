@@ -57,7 +57,7 @@ const Admin = () => {
     pendingReports: 0,
   });
 
-  const isAdmin = roles.includes("host"); // For MVP, hosts can access admin
+  const isAdmin = roles.includes("admin" as any); // Only users with admin role can access
 
   useEffect(() => {
     if (!loading && !user) {
