@@ -583,7 +583,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "host" | "traveler" | "foodie"
+      app_role: "host" | "traveler" | "foodie" | "admin"
       booking_status: "requested" | "approved" | "rejected"
       experience_type: "meal" | "cooking_class" | "festival"
       post_type:
@@ -718,7 +718,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["host", "traveler", "foodie"],
+      app_role: ["host", "traveler", "foodie", "admin"],
       booking_status: ["requested", "approved", "rejected"],
       experience_type: ["meal", "cooking_class", "festival"],
       post_type: [
