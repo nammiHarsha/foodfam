@@ -15,7 +15,7 @@ interface Profile {
   updated_at: string;
 }
 
-type AppRole = "host" | "traveler" | "foodie";
+type AppRole = "host" | "guest" | "admin";
 
 interface AuthContextType {
   user: User | null;

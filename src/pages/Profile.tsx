@@ -239,7 +239,7 @@ const ProfilePage = () => {
                   <div className="flex flex-wrap gap-2 mb-4">
                     {roles.map((role) => (
                       <Badge key={role} variant="outline" className="capitalize">
-                        {role === "host" ? "🏠 Host" : role === "traveler" ? "✈️ Traveler" : "🍴 Foodie"}
+                        {role === "host" ? "🏠 Host" : role === "guest" ? "🍽️ Guest" : role === "admin" ? "⚙️ Admin" : role}
                       </Badge>
                     ))}
                   </div>

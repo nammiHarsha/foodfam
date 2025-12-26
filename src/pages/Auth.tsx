@@ -16,7 +16,7 @@ const authSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").optional(),
 });
 
-type AppRole = "host" | "traveler" | "foodie";
+type AppRole = "host" | "guest";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -185,23 +185,28 @@ const Auth = () => {
 
               {isSignUp && (
                 <div className="space-y-3">
-                  <Label>I want to (select all that apply)</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(["host", "traveler", "foodie"] as AppRole[]).map((role) => (
+                  <Label>I want to join as</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {(["host", "guest"] as AppRole[]).map((role) => (
                       <button
                         key={role}
                         type="button"
-                        onClick={() => toggleRole(role)}
-                        className={`p-3 rounded-xl border text-center transition-all ${
+                        onClick={() => setSelectedRoles([role])}
+                        className={`p-4 rounded-xl border text-center transition-all ${
                           selectedRoles.includes(role)
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border hover:border-primary/50"
                         }`}
                       >
-                        <span className="text-xl mb-1 block">
-                          {role === "host" ? "👨‍🍳" : role === "traveler" ? "✈️" : "❤️"}
+                        <span className="text-2xl mb-2 block">
+                          {role === "host" ? "👨‍🍳" : "🍽️"}
                         </span>
                         <span className="text-sm font-medium capitalize">{role}</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {role === "host" 
+                            ? "Share your culinary experiences" 
+                            : "Discover & book experiences"}
+                        </p>
                       </button>
                     ))}
                   </div>

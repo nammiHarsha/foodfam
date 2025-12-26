@@ -28,7 +28,7 @@ const Hero = () => {
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Connect with passionate home cooks and travelers. Share authentic food experiences, 
+            Connect with passionate home cooks and food lovers. Share authentic food experiences, 
             discover new cultures, and build friendships that last beyond the dinner table.
           </p>
 
