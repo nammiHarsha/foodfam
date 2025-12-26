@@ -1,31 +1,23 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChefHat, Plane, Heart } from "lucide-react";
+import { ChefHat, UtensilsCrossed } from "lucide-react";
 
 const roles = [
   {
     icon: ChefHat,
     title: "Become a Host",
-    description: "Share your culinary heritage and connect with travelers from around the world.",
+    description: "Share your culinary heritage and connect with food lovers from around the world.",
     cta: "Start Hosting",
     href: "/auth?mode=signup&role=host",
     color: "primary",
   },
   {
-    icon: Plane,
-    title: "Join as Traveler",
-    description: "Discover authentic local cuisines and create unforgettable memories.",
+    icon: UtensilsCrossed,
+    title: "Join as Guest",
+    description: "Discover authentic local cuisines, book experiences, and create unforgettable memories.",
     cta: "Start Exploring",
-    href: "/auth?mode=signup&role=traveler",
+    href: "/auth?mode=signup&role=guest",
     color: "accent",
-  },
-  {
-    icon: Heart,
-    title: "Be a Foodie",
-    description: "Connect with local food lovers and discover hidden culinary gems.",
-    cta: "Join Community",
-    href: "/auth?mode=signup&role=foodie",
-    color: "honey",
   },
 ];
 
@@ -38,12 +30,12 @@ const CTASection = () => {
             How Will You Join the Table?
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Whether you're a passionate home cook, an adventurous traveler, or a dedicated foodie, 
-            there's a place for you in our community.
+            Whether you're a passionate home cook ready to share your heritage or looking to discover 
+            authentic culinary experiences, there's a place for you in our community.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {roles.map((role) => (
             <div
               key={role.title}

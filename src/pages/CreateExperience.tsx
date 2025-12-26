@@ -21,7 +21,7 @@ import type { ExperienceType } from "@/types/database";
 
 const CreateExperience = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -62,6 +62,17 @@ const CreateExperience = () => {
     return null;
   }
 
+  if (!roles.includes("host")) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h1 className="font-serif text-2xl mb-4">Host Access Required</h1>
+          <p className="text-muted-foreground">Only hosts can create experiences.</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <HelmetProvider>
       <SEOHead
@@ -74,7 +85,7 @@ const CreateExperience = () => {
             Create an Experience
           </h1>
           <p className="text-muted-foreground mb-8">
-            Share your culinary passion with travelers and food lovers
+            Share your culinary passion with guests from around the world
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">

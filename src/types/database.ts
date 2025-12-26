@@ -1,4 +1,4 @@
-export type AppRole = "host" | "traveler" | "foodie";
+export type AppRole = "host" | "guest" | "admin";
 export type PostType = "cultural_dish" | "recipe" | "travel_memory" | "experience_memory";
 export type ExperienceType = "meal" | "cooking_class" | "festival";
 export type BookingStatus = "requested" | "approved" | "rejected";
