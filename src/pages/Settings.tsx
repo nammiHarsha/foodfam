@@ -31,12 +31,6 @@ const Settings = () => {
   const [languageInput, setLanguageInput] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (profile) {
@@ -122,6 +116,12 @@ const Settings = () => {
         </div>
       </Layout>
     );
+  }
+
+
+  if (!user) {
+    navigate("/auth");
+    return null;
   }
 
   return (

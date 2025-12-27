@@ -60,13 +60,6 @@ const Admin = () => {
   const isAdmin = roles.includes("admin" as any); // Only users with admin role can access
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
     if (!isAdmin) {
       navigate("/");
       toast.error("Access denied. Admin only.");
@@ -74,7 +67,7 @@ const Admin = () => {
     }
 
     fetchData();
-  }, [user, authLoading, isAdmin, navigate]);
+  }, [isAdmin, navigate]);
 
   const fetchData = async () => {
     // Fetch profiles as users
@@ -168,6 +161,12 @@ const Admin = () => {
         </div>
       </Layout>
     );
+  }
+
+
+  if (!user) {
+    navigate("/auth");
+    return null;
   }
 
   return (

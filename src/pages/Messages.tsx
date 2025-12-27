@@ -37,15 +37,25 @@ const Messages = () => {
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Wait for auth to be checked before redirecting
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+  // Protected route guard: never redirect while auth is still hydrating.
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <Skeleton className="h-[600px] w-full rounded-xl" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
+
+  useEffect(() => {
     const fetchConversations = async () => {
       // Get all conversations where user is a participant
       const { data: participations } = await supabase
@@ -241,7 +251,7 @@ const Messages = () => {
     setSending(false);
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
