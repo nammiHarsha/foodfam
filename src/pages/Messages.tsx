@@ -138,23 +138,16 @@ const Messages = () => {
   const createOrSelectConversation = async (otherUserId: string) => {
     if (!user) return;
 
-    // Create new conversation
-    const { data: newConv, error: convError } = await supabase
-      .from("conversations")
-      .insert({})
-      .select()
-      .single();
+    // Use secure RPC function to create conversation with participants
+    const { data: newConvId, error: convError } = await supabase
+      .rpc('create_conversation_with_participants', {
+        participant_ids: [user.id, otherUserId]
+      });
 
-    if (convError || !newConv) {
+    if (convError || !newConvId) {
       console.error("Failed to create conversation", convError);
       return;
     }
-
-    // Add participants
-    await supabase.from("conversation_participants").insert([
-      { conversation_id: newConv.id, user_id: user.id },
-      { conversation_id: newConv.id, user_id: otherUserId },
-    ]);
 
     // Get other user profile
     const { data: profile } = await supabase
@@ -164,12 +157,14 @@ const Messages = () => {
       .maybeSingle();
 
     const newConversation: ConversationWithDetails = {
-      ...newConv,
+      id: newConvId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       participants: [{ user_id: otherUserId, profile: profile as Profile }],
     };
 
     setConversations((prev) => [newConversation, ...prev]);
-    setSelectedConversation(newConv.id);
+    setSelectedConversation(newConvId);
   };
 
   // Fetch messages when conversation is selected
