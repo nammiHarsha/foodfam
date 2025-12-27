@@ -22,7 +22,7 @@ type AppRole = "host" | "guest";
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,13 +30,22 @@ const Auth = () => {
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pendingRedirect, setPendingRedirect] = useState(false);
 
-  // Redirect to home if already authenticated - uses centralized auth state
+  // Redirect away from auth page only once auth state is fully hydrated.
   useEffect(() => {
     if (!authLoading && user) {
       navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
+
+  // After successful login/signup, wait for authLoading to settle before navigating.
+  useEffect(() => {
+    if (!pendingRedirect) return;
+    if (authLoading) return;
+    if (!user) return;
+    navigate("/", { replace: true });
+  }, [pendingRedirect, authLoading, user, navigate]);
 
   const toggleRole = (role: AppRole) => {
     setSelectedRoles((prev) =>
@@ -86,28 +95,26 @@ const Auth = () => {
 
         if (error) throw error;
 
-        // Insert roles immediately after signup, before auth state change triggers redirect
+        // Best-effort: assign role(s) right after signup (requires auto-confirm email signups).
         if (data.user) {
-          const roleInserts = selectedRoles.map(role => 
-            supabase.from("user_roles").insert({
-              user_id: data.user!.id,
-              role: role,
-            })
+          const roleResults = await Promise.all(
+            selectedRoles.map((role) =>
+              supabase.from("user_roles").insert({
+                user_id: data.user!.id,
+                role,
+              })
+            )
           );
-          
-          const roleResults = await Promise.all(roleInserts);
-          const roleErrors = roleResults.filter(r => r.error);
-          
+
+          const roleErrors = roleResults.filter((r) => r.error);
           if (roleErrors.length > 0) {
-            console.error("Failed to assign roles:", roleErrors);
-            toast.error("Account created but failed to assign role. Please contact support.");
+            toast.error("Account created but failed to assign role. Please try again.");
             return;
           }
         }
 
         toast.success("Welcome to FoodFam! You're now signed in.");
-        // Explicitly navigate after successful signup
-        navigate("/", { replace: true });
+        setPendingRedirect(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -116,8 +123,7 @@ const Auth = () => {
 
         if (error) throw error;
         toast.success("Welcome back!");
-        // Explicitly navigate after successful login
-        navigate("/", { replace: true });
+        setPendingRedirect(true);
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");

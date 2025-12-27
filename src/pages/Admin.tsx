@@ -46,7 +46,7 @@ interface BookingWithDetails {
 }
 
 const Admin = () => {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, authLoading } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -60,21 +60,21 @@ const Admin = () => {
   const isAdmin = roles.includes("admin" as any); // Only users with admin role can access
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (authLoading) return;
+
+    if (!user) {
       navigate("/auth");
       return;
     }
 
-    if (!loading && !isAdmin) {
+    if (!isAdmin) {
       navigate("/");
       toast.error("Access denied. Admin only.");
       return;
     }
 
-    if (user && isAdmin) {
-      fetchData();
-    }
-  }, [user, loading, isAdmin, navigate]);
+    fetchData();
+  }, [user, authLoading, isAdmin, navigate]);
 
   const fetchData = async () => {
     // Fetch profiles as users
@@ -157,7 +157,7 @@ const Admin = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 
 import { formatDistanceToNow } from "date-fns";
 import Layout from "@/components/layout/Layout";
@@ -16,7 +16,8 @@ import type { Profile, CommunityPost, Experience, Review } from "@/types/databas
 
 const ProfilePage = () => {
   const { id } = useParams();
-  const { user, profile: currentUserProfile } = useAuth();
+  const navigate = useNavigate();
+  const { user, authLoading, profile: currentUserProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -24,6 +25,13 @@ const ProfilePage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
+
+  // If viewing your own profile (/profile), require auth but don't redirect until auth is hydrated.
+  useEffect(() => {
+    if (id) return;
+    if (authLoading) return;
+    if (!user) navigate("/auth");
+  }, [id, authLoading, user, navigate]);
 
   const isOwnProfile = user?.id === (id || user?.id);
   const profileId = id || user?.id;
