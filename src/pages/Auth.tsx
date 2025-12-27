@@ -67,6 +67,13 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        // Require role selection for signup
+        if (selectedRoles.length === 0) {
+          setErrors({ roles: "Please select a role to continue" });
+          setLoading(false);
+          return;
+        }
+
         const redirectUrl = `${window.location.origin}/`;
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -79,12 +86,22 @@ const Auth = () => {
 
         if (error) throw error;
 
-        if (data.user && selectedRoles.length > 0) {
-          for (const role of selectedRoles) {
-            await supabase.from("user_roles").insert({
-              user_id: data.user.id,
+        // Insert roles immediately after signup, before auth state change triggers redirect
+        if (data.user) {
+          const roleInserts = selectedRoles.map(role => 
+            supabase.from("user_roles").insert({
+              user_id: data.user!.id,
               role: role,
-            });
+            })
+          );
+          
+          const roleResults = await Promise.all(roleInserts);
+          const roleErrors = roleResults.filter(r => r.error);
+          
+          if (roleErrors.length > 0) {
+            console.error("Failed to assign roles:", roleErrors);
+            toast.error("Account created but failed to assign role. Please contact support.");
+            return;
           }
         }
 
@@ -190,18 +207,21 @@ const Auth = () => {
 
               {isSignUp && (
                 <div className="space-y-3">
-                  <Label>I want to join as</Label>
+                  <Label>I want to join as <span className="text-destructive">*</span></Label>
                   <div className="grid grid-cols-2 gap-4">
                     {(["host", "guest"] as AppRole[]).map((role) => (
                       <button
                         key={role}
                         type="button"
-                        onClick={() => setSelectedRoles([role])}
+                        onClick={() => {
+                          setSelectedRoles([role]);
+                          setErrors(prev => ({ ...prev, roles: undefined }));
+                        }}
                         className={`p-4 rounded-xl border text-center transition-all ${
                           selectedRoles.includes(role)
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border hover:border-primary/50"
-                        }`}
+                        } ${errors.roles ? "border-destructive" : ""}`}
                       >
                         <span className="text-2xl mb-2 block">
                           {role === "host" ? "👨‍🍳" : "🍽️"}
@@ -215,6 +235,9 @@ const Auth = () => {
                       </button>
                     ))}
                   </div>
+                  {errors.roles && (
+                    <p className="text-sm text-destructive">{errors.roles}</p>
+                  )}
                 </div>
               )}
 
