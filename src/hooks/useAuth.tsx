@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const mountedRef = useRef(true);
   const initializedRef = useRef(false);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   const fetchOrCreateProfile = async (userId: string, fullName?: string | null) => {
     const { data, error } = await supabase
@@ -93,7 +94,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("role")
       .eq("user_id", userId);
 
-    if (error) return null;
+    if (error) {
+      if (mountedRef.current) setRoles([]);
+      return [] as AppRole[];
+    }
 
     const next = (data ?? []).map((r) => r.role as AppRole);
     if (mountedRef.current) setRoles(next);
@@ -107,6 +111,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         fetchOrCreateProfile(sessionUser.id, (sessionUser.user_metadata as any)?.full_name ?? null),
         fetchRoles(sessionUser.id),
       ]);
+
+      if (mountedRef.current) {
+        loadedUserIdRef.current = sessionUser.id;
+      }
     } finally {
       if (mountedRef.current) setProfileLoading(false);
     }
@@ -150,12 +158,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // We only clear authLoading after the explicit getSession() hydration finishes.
       if (!initializedRef.current) return;
 
-      if (nextSession?.user) {
-        // Defer Supabase calls to avoid auth deadlocks
-        setTimeout(() => {
-          if (mountedRef.current) loadUserData(nextSession.user);
-        }, 0);
+      if (!nextSession?.user) {
+        loadedUserIdRef.current = null;
+        if (mountedRef.current) {
+          setProfileLoading(false);
+          setAuthLoading(false);
+        }
+        return;
       }
+
+      const nextUserId = nextSession.user.id;
+      if (loadedUserIdRef.current === nextUserId) return;
+
+      // Block route guards until profile + roles are loaded for the signed-in user.
+      if (mountedRef.current) setAuthLoading(true);
+
+      // Defer Supabase calls to avoid auth deadlocks
+      setTimeout(() => {
+        if (!mountedRef.current) return;
+
+        loadUserData(nextSession.user)
+          .catch(() => {
+            // ignore; authLoading is released in finally
+          })
+          .finally(() => {
+            if (!mountedRef.current) return;
+            loadedUserIdRef.current = nextUserId;
+            setAuthLoading(false);
+          });
+      }, 0);
     });
 
     // THEN check for existing session (authoritative hydration)
@@ -169,6 +200,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (existingSession?.user) {
           await loadUserData(existingSession.user);
+          if (mountedRef.current) loadedUserIdRef.current = existingSession.user.id;
+        } else {
+          if (mountedRef.current) loadedUserIdRef.current = null;
         }
       } finally {
         if (mountedRef.current) {
@@ -187,6 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     if (!mountedRef.current) return;
+    loadedUserIdRef.current = null;
     setUser(null);
     setSession(null);
     setProfile(null);
