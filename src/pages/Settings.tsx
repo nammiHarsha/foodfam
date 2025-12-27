@@ -17,7 +17,7 @@ import { User, MapPin, Globe, Camera, Save, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Settings = () => {
-  const { user, profile, roles, loading, refreshProfile } = useAuth();
+  const { user, profile, roles, authLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -32,10 +32,11 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (authLoading) return;
+    if (!user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (profile) {
@@ -105,7 +106,7 @@ const Settings = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8 max-w-2xl">

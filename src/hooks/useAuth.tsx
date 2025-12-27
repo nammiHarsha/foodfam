@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -15,15 +15,19 @@ interface Profile {
   updated_at: string;
 }
 
-type AppRole = "host" | "guest" | "admin";
+type AppRole = "host" | "guest" | "admin" | "traveler" | "foodie";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
-  loading: boolean;
+  /** Initial auth/session hydration */
+  authLoading: boolean;
+  /** Backfill + fetch profile + roles */
   profileLoading: boolean;
+  /** Backwards-compatible alias for authLoading */
+  loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -35,103 +39,154 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+  const mountedRef = useRef(true);
+  const initializedRef = useRef(false);
+
+  const fetchOrCreateProfile = async (userId: string, fullName?: string | null) => {
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
-    setProfile(data);
-    return data;
+
+    if (error) {
+      return null;
+    }
+
+    if (data) {
+      if (mountedRef.current) setProfile(data);
+      return data;
+    }
+
+    // No profile yet (common right after signup) → create a minimal row.
+    const { data: created, error: createError } = await supabase
+      .from("profiles")
+      .insert({
+        user_id: userId,
+        full_name: fullName ?? null,
+      })
+      .select("*")
+      .maybeSingle();
+
+    if (createError) {
+      // In case of a race (profile created elsewhere), try one last read.
+      const { data: retry } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (mountedRef.current) setProfile(retry ?? null);
+      return retry ?? null;
+    }
+
+    if (mountedRef.current) setProfile(created);
+    return created;
   };
 
   const fetchRoles = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    if (data) {
-      setRoles(data.map((r) => r.role as AppRole));
+
+    if (error) return null;
+
+    const next = (data ?? []).map((r) => r.role as AppRole);
+    if (mountedRef.current) setRoles(next);
+    return next;
+  };
+
+  const loadUserData = async (sessionUser: User) => {
+    setProfileLoading(true);
+    try {
+      await Promise.all([
+        fetchOrCreateProfile(sessionUser.id, (sessionUser.user_metadata as any)?.full_name ?? null),
+        fetchRoles(sessionUser.id),
+      ]);
+    } finally {
+      if (mountedRef.current) setProfileLoading(false);
     }
-    return data;
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      setProfileLoading(true);
-      try {
-        await fetchProfile(user.id);
-        await fetchRoles(user.id);
-      } finally {
-        setProfileLoading(false);
-      }
-    }
-  };
+    if (!user) return;
 
-  const loadUserData = async (userId: string) => {
     setProfileLoading(true);
     try {
-      await Promise.all([fetchProfile(userId), fetchRoles(userId)]);
+      await Promise.all([
+        fetchOrCreateProfile(user.id, (user.user_metadata as any)?.full_name ?? null),
+        fetchRoles(user.id),
+      ]);
     } finally {
-      setProfileLoading(false);
+      if (mountedRef.current) setProfileLoading(false);
     }
   };
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
+
+    const applySession = (nextSession: Session | null) => {
+      if (!mountedRef.current) return;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        setProfile(null);
+        setRoles([]);
+      }
+    };
 
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
-          setTimeout(() => {
-            if (mounted) {
-              loadUserData(session.user.id);
-            }
-          }, 0);
-        } else {
-          setProfile(null);
-          setRoles([]);
-        }
-        
-        // Only set loading to false after session is determined
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      applySession(nextSession);
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        loadUserData(session.user.id).then(() => {
-          if (mounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
+      // Don't let the very first auth event prematurely unlock route guards.
+      // We only clear authLoading after the explicit getSession() hydration finishes.
+      if (!initializedRef.current) return;
+
+      if (nextSession?.user) {
+        // Defer Supabase calls to avoid auth deadlocks
+        setTimeout(() => {
+          if (mountedRef.current) loadUserData(nextSession.user);
+        }, 0);
       }
     });
 
+    // THEN check for existing session (authoritative hydration)
+    (async () => {
+      try {
+        const {
+          data: { session: existingSession },
+        } = await supabase.auth.getSession();
+
+        applySession(existingSession);
+
+        if (existingSession?.user) {
+          await loadUserData(existingSession.user);
+        }
+      } finally {
+        if (mountedRef.current) {
+          initializedRef.current = true;
+          setAuthLoading(false);
+        }
+      }
+    })();
+
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    if (!mountedRef.current) return;
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -139,7 +194,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, profileLoading, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        roles,
+        authLoading,
+        profileLoading,
+        loading: authLoading,
+        signOut,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
