@@ -30,22 +30,14 @@ const Auth = () => {
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [pendingRedirect, setPendingRedirect] = useState(false);
-  const [pendingRoleInsert, setPendingRoleInsert] = useState<AppRole[] | null>(null);
-  // Redirect away from auth page only once auth state is fully hydrated.
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate("/", { replace: true });
-    }
-  }, [user, authLoading, navigate]);
 
-  // After successful login/signup, wait for authLoading to settle before navigating.
+  // Redirect away from auth page only once auth state is fully hydrated AND we're not mid-submit.
   useEffect(() => {
-    if (!pendingRedirect) return;
     if (authLoading) return;
     if (!user) return;
+    if (loading) return;
     navigate("/", { replace: true });
-  }, [pendingRedirect, authLoading, user, navigate]);
+  }, [user, authLoading, loading, navigate]);
 
   const toggleRole = (role: AppRole) => {
     setSelectedRoles((prev) =>
@@ -95,28 +87,22 @@ const Auth = () => {
 
         if (error) throw error;
 
-        // Assign role(s) right after signup.
-        // If the session isn't immediately available, we'll retry once useAuth has hydrated the user.
+        // Assign required role right after signup (must succeed before redirect).
         if (data.user) {
-          const sessionUserId = data.user.id;
+          const role = selectedRoles[0];
+          const { error: roleError } = await supabase.from("user_roles").insert({
+            user_id: data.user.id,
+            role,
+          });
 
-          const roleResults = await Promise.all(
-            selectedRoles.map((role) =>
-              supabase.from("user_roles").insert({
-                user_id: sessionUserId,
-                role,
-              })
-            )
-          );
-
-          const roleErrors = roleResults.filter((r) => r.error);
-          if (roleErrors.length > 0) {
-            setPendingRoleInsert(selectedRoles);
+          if (roleError) {
+            // Role selection is required for the app; don't proceed signed-in without it.
+            await supabase.auth.signOut();
+            throw new Error(roleError.message || "Failed to assign role. Please try again.");
           }
         }
 
         toast.success("Welcome to FoodFam! You're now signed in.");
-        setPendingRedirect(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -125,7 +111,6 @@ const Auth = () => {
 
         if (error) throw error;
         toast.success("Welcome back!");
-        setPendingRedirect(true);
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");

@@ -41,15 +41,30 @@ const MyTrips = () => {
   const [reviewBooking, setReviewBooking] = useState<BookingWithDetails | null>(null);
   const [reviewedBookings, setReviewedBookings] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    // Wait for auth to be checked before redirecting
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+  // Protected route guard: never redirect while auth is still hydrating.
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Skeleton className="h-10 w-48" />
+            <div className="grid gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
+
+  useEffect(() => {
     const fetchBookings = async () => {
       const { data: bookingsData } = await supabase
         .from("bookings")
@@ -103,7 +118,7 @@ const MyTrips = () => {
     setReviewBooking(null);
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

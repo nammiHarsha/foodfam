@@ -34,21 +34,36 @@ const HostDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // Protected route guard: never redirect while auth is still hydrating.
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Skeleton className="h-10 w-48" />
+            <div className="grid gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
+
+  if (!roles.includes("host")) {
+    navigate("/");
+    toast.error("You need to be a host to access this page");
+    return null;
+  }
+
   useEffect(() => {
-    // Wait for auth to be checked before redirecting
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    if (!roles.includes("host")) {
-      navigate("/");
-      toast.error("You need to be a host to access this page");
-      return;
-    }
-
     const fetchData = async () => {
       // Fetch bookings
       const { data: bookingsData } = await supabase
@@ -99,7 +114,7 @@ const HostDashboard = () => {
   const upcomingBookings = bookings.filter((b) => b.status === "approved");
   const pastBookings = bookings.filter((b) => b.status === "rejected");
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
