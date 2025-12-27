@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { formatDistanceToNow } from "date-fns";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import type { Message, Profile } from "@/types/database";
+import { toast } from "sonner";
 
 type ConversationWithDetails = {
   id: string;
@@ -37,119 +38,9 @@ const Messages = () => {
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Protected route guard: never redirect while auth is still hydrating.
-  if (authLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <Skeleton className="h-[600px] w-full rounded-xl" />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
-
-  useEffect(() => {
-    const fetchConversations = async () => {
-      // Get all conversations where user is a participant
-      const { data: participations } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("user_id", user.id);
-
-      if (!participations || participations.length === 0) {
-        // If targeting a user, create new conversation
-        if (targetUserId && targetUserId !== user.id) {
-          await createOrSelectConversation(targetUserId);
-        }
-        setLoading(false);
-        return;
-      }
-
-      const conversationIds = participations.map((p) => p.conversation_id);
-
-      // Get conversation details with participants
-      const { data: conversationsData } = await supabase
-        .from("conversations")
-        .select("*")
-        .in("id", conversationIds)
-        .order("updated_at", { ascending: false });
-
-      if (!conversationsData) {
-        setLoading(false);
-        return;
-      }
-
-      // Get all participants for these conversations
-      const { data: allParticipants } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id, user_id")
-        .in("conversation_id", conversationIds);
-
-      // Get profiles for other participants
-      const otherUserIds = [...new Set(
-        allParticipants?.filter((p) => p.user_id !== user.id).map((p) => p.user_id) || []
-      )];
-
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("user_id", otherUserIds);
-
-      // Get last message for each conversation
-      const conversationsWithDetails: ConversationWithDetails[] = await Promise.all(
-        conversationsData.map(async (conv) => {
-          const { data: lastMsg } = await supabase
-            .from("messages")
-            .select("*")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          const convParticipants = allParticipants
-            ?.filter((p) => p.conversation_id === conv.id && p.user_id !== user.id)
-            .map((p) => ({
-              user_id: p.user_id,
-              profile: profiles?.find((prof) => prof.user_id === p.user_id) as Profile,
-            })) || [];
-
-          return {
-            ...conv,
-            participants: convParticipants,
-            lastMessage: lastMsg as Message | undefined,
-          };
-        })
-      );
-
-      setConversations(conversationsWithDetails);
-
-      // If targeting a user, find or create conversation
-      if (targetUserId && targetUserId !== user.id) {
-        const existingConv = conversationsWithDetails.find((c) =>
-          c.participants.some((p) => p.user_id === targetUserId)
-        );
-        if (existingConv) {
-          setSelectedConversation(existingConv.id);
-        } else {
-          await createOrSelectConversation(targetUserId);
-        }
-      }
-
-      setLoading(false);
-    };
-
-    fetchConversations();
-  }, [user, authLoading, navigate, targetUserId]);
-
-  const createOrSelectConversation = async (otherUserId: string) => {
-    if (!user) return;
+  // Create or select existing conversation with another user
+  const createOrSelectConversation = useCallback(async (otherUserId: string) => {
+    if (!user) return null;
 
     // Use secure RPC function to create conversation with participants
     const { data: newConvId, error: convError } = await supabase
@@ -159,7 +50,8 @@ const Messages = () => {
 
     if (convError || !newConvId) {
       console.error("Failed to create conversation", convError);
-      return;
+      toast.error("Failed to start conversation");
+      return null;
     }
 
     // Get other user profile
@@ -176,20 +68,139 @@ const Messages = () => {
       participants: [{ user_id: otherUserId, profile: profile as Profile }],
     };
 
-    setConversations((prev) => [newConversation, ...prev]);
+    setConversations((prev) => {
+      // Prevent duplicates
+      if (prev.some(c => c.id === newConvId)) return prev;
+      return [newConversation, ...prev];
+    });
     setSelectedConversation(newConvId);
-  };
+    return newConvId;
+  }, [user]);
+
+  // Fetch conversations on mount
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const fetchConversations = async () => {
+      setLoading(true);
+      
+      try {
+        // Get all conversations where user is a participant
+        const { data: participations, error: partError } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("user_id", user.id);
+
+        if (partError) {
+          console.error("Failed to fetch participations", partError);
+          setLoading(false);
+          return;
+        }
+
+        if (!participations || participations.length === 0) {
+          // If targeting a user, create new conversation
+          if (targetUserId && targetUserId !== user.id) {
+            await createOrSelectConversation(targetUserId);
+          }
+          setLoading(false);
+          return;
+        }
+
+        const conversationIds = participations.map((p) => p.conversation_id);
+
+        // Get conversation details
+        const { data: conversationsData, error: convError } = await supabase
+          .from("conversations")
+          .select("*")
+          .in("id", conversationIds)
+          .order("updated_at", { ascending: false });
+
+        if (convError || !conversationsData) {
+          console.error("Failed to fetch conversations", convError);
+          setLoading(false);
+          return;
+        }
+
+        // Get all participants for these conversations
+        const { data: allParticipants } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id, user_id")
+          .in("conversation_id", conversationIds);
+
+        // Get profiles for other participants
+        const otherUserIds = [...new Set(
+          allParticipants?.filter((p) => p.user_id !== user.id).map((p) => p.user_id) || []
+        )];
+
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("*")
+          .in("user_id", otherUserIds);
+
+        // Get last message for each conversation
+        const conversationsWithDetails: ConversationWithDetails[] = await Promise.all(
+          conversationsData.map(async (conv) => {
+            const { data: lastMsg } = await supabase
+              .from("messages")
+              .select("*")
+              .eq("conversation_id", conv.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            const convParticipants = allParticipants
+              ?.filter((p) => p.conversation_id === conv.id && p.user_id !== user.id)
+              .map((p) => ({
+                user_id: p.user_id,
+                profile: profiles?.find((prof) => prof.user_id === p.user_id) as Profile,
+              })) || [];
+
+            return {
+              ...conv,
+              participants: convParticipants,
+              lastMessage: lastMsg as Message | undefined,
+            };
+          })
+        );
+
+        setConversations(conversationsWithDetails);
+
+        // If targeting a user, find or create conversation
+        if (targetUserId && targetUserId !== user.id) {
+          const existingConv = conversationsWithDetails.find((c) =>
+            c.participants.some((p) => p.user_id === targetUserId)
+          );
+          if (existingConv) {
+            setSelectedConversation(existingConv.id);
+          } else {
+            await createOrSelectConversation(targetUserId);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching conversations", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConversations();
+  }, [user, authLoading, targetUserId, createOrSelectConversation]);
 
   // Fetch messages when conversation is selected
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!selectedConversation || !user) return;
 
     const fetchMessages = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .select("*")
         .eq("conversation_id", selectedConversation)
         .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Failed to fetch messages", error);
+        return;
+      }
 
       setMessages((data as Message[]) || []);
 
@@ -202,7 +213,7 @@ const Messages = () => {
 
     fetchMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messages in this conversation
     const channel = supabase
       .channel(`messages:${selectedConversation}`)
       .on(
@@ -214,7 +225,11 @@ const Messages = () => {
           filter: `conversation_id=eq.${selectedConversation}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          setMessages((prev) => {
+            // Prevent duplicate messages
+            if (prev.some(m => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new as Message];
+          });
         }
       )
       .subscribe();
@@ -222,34 +237,67 @@ const Messages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedConversation, conversations]);
+  }, [selectedConversation, conversations, user]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Redirect to auth if not logged in (after loading is complete)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [authLoading, user, navigate]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !user) return;
 
     setSending(true);
+    
+    const messageContent = newMessage.trim();
+    setNewMessage(""); // Clear input immediately for better UX
+
     const { error } = await supabase.from("messages").insert({
       conversation_id: selectedConversation,
       sender_id: user.id,
-      content: newMessage.trim(),
+      content: messageContent,
     });
 
-    if (!error) {
-      setNewMessage("");
+    if (error) {
+      console.error("Failed to send message", error);
+      toast.error("Failed to send message");
+      setNewMessage(messageContent); // Restore on failure
+    } else {
       // Update conversation timestamp
       await supabase
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", selectedConversation);
     }
+    
     setSending(false);
   };
+
+  // Show loading skeleton while auth is loading
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <Skeleton className="h-[600px] w-full rounded-xl" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render if not authenticated (redirect will happen via useEffect)
+  if (!user) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -285,6 +333,7 @@ const Messages = () => {
                     <div className="p-4 text-center text-muted-foreground">
                       <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>No conversations yet</p>
+                      <p className="text-sm mt-1">Start a conversation by messaging a host!</p>
                     </div>
                   ) : (
                     conversations.map((conv) => {
@@ -357,32 +406,39 @@ const Messages = () => {
                     {/* Messages */}
                     <ScrollArea className="flex-1 p-4">
                       <div className="space-y-4">
-                        {messages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={cn(
-                              "flex",
-                              msg.sender_id === user?.id ? "justify-end" : "justify-start"
-                            )}
-                          >
+                        {messages.length === 0 ? (
+                          <div className="text-center text-muted-foreground py-8">
+                            <p>No messages yet</p>
+                            <p className="text-sm mt-1">Send a message to start the conversation!</p>
+                          </div>
+                        ) : (
+                          messages.map((msg) => (
                             <div
+                              key={msg.id}
                               className={cn(
-                                "max-w-[80%] rounded-2xl px-4 py-2",
-                                msg.sender_id === user?.id
-                                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                                  : "bg-secondary rounded-bl-sm"
+                                "flex",
+                                msg.sender_id === user?.id ? "justify-end" : "justify-start"
                               )}
                             >
-                              <p>{msg.content}</p>
-                              <span className={cn(
-                                "text-xs opacity-70 block mt-1",
-                                msg.sender_id === user?.id ? "text-right" : "text-left"
-                              )}>
-                                {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                              </span>
+                              <div
+                                className={cn(
+                                  "max-w-[80%] rounded-2xl px-4 py-2",
+                                  msg.sender_id === user?.id
+                                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                                    : "bg-secondary rounded-bl-sm"
+                                )}
+                              >
+                                <p>{msg.content}</p>
+                                <span className={cn(
+                                  "text-xs opacity-70 block mt-1",
+                                  msg.sender_id === user?.id ? "text-right" : "text-left"
+                                )}>
+                                  {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        )}
                         <div ref={messagesEndRef} />
                       </div>
                     </ScrollArea>
