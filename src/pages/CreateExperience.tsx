@@ -35,6 +35,36 @@ const CreateExperience = () => {
     experience_type: "meal" as ExperienceType,
   });
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("experiences").insert({
+        host_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        story: formData.story || null,
+        cuisine_type: formData.cuisine_type || null,
+        location: formData.location || null,
+        max_guests: formData.max_guests,
+        price_per_person: formData.price_per_person,
+        image_url: formData.image_url || null,
+        experience_type: formData.experience_type,
+      });
+
+      if (error) throw error;
+
+      toast.success("Experience created successfully!");
+      navigate("/host-dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create experience");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Protected route guard: never redirect while auth is still hydrating.
   if (authLoading) {
     return (
