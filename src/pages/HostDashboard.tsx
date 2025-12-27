@@ -27,7 +27,7 @@ const statusColors = {
 };
 
 const HostDashboard = () => {
-  const { user, roles } = useAuth();
+  const { user, roles, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -35,6 +35,9 @@ const HostDashboard = () => {
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait for auth to be checked before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       navigate("/auth");
       return;
@@ -72,7 +75,7 @@ const HostDashboard = () => {
     };
 
     fetchData();
-  }, [user, roles, navigate]);
+  }, [user, roles, authLoading, navigate]);
 
   const updateBookingStatus = async (bookingId: string, status: "approved" | "rejected") => {
     setUpdating(bookingId);

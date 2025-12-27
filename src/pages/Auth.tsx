@@ -106,6 +106,8 @@ const Auth = () => {
         }
 
         toast.success("Welcome to FoodFam! You're now signed in.");
+        // Explicitly navigate after successful signup
+        navigate("/", { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -114,6 +116,8 @@ const Auth = () => {
 
         if (error) throw error;
         toast.success("Welcome back!");
+        // Explicitly navigate after successful login
+        navigate("/", { replace: true });
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
