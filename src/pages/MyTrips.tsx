@@ -34,7 +34,7 @@ const statusLabels = {
 };
 
 const MyTrips = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +103,7 @@ const MyTrips = () => {
     setReviewBooking(null);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

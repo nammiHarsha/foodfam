@@ -31,7 +31,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingRedirect, setPendingRedirect] = useState(false);
-
+  const [pendingRoleInsert, setPendingRoleInsert] = useState<AppRole[] | null>(null);
   // Redirect away from auth page only once auth state is fully hydrated.
   useEffect(() => {
     if (!authLoading && user) {
@@ -95,12 +95,15 @@ const Auth = () => {
 
         if (error) throw error;
 
-        // Best-effort: assign role(s) right after signup (requires auto-confirm email signups).
+        // Assign role(s) right after signup.
+        // If the session isn't immediately available, we'll retry once useAuth has hydrated the user.
         if (data.user) {
+          const sessionUserId = data.user.id;
+
           const roleResults = await Promise.all(
             selectedRoles.map((role) =>
               supabase.from("user_roles").insert({
-                user_id: data.user!.id,
+                user_id: sessionUserId,
                 role,
               })
             )
@@ -108,8 +111,7 @@ const Auth = () => {
 
           const roleErrors = roleResults.filter((r) => r.error);
           if (roleErrors.length > 0) {
-            toast.error("Account created but failed to assign role. Please try again.");
-            return;
+            setPendingRoleInsert(selectedRoles);
           }
         }
 

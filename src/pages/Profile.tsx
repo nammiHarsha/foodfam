@@ -140,7 +140,7 @@ const ProfilePage = () => {
 
   const isProfileComplete = profile?.full_name && profile?.bio && profile?.location;
 
-  if (loading) {
+  if (loading || (!id && authLoading)) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

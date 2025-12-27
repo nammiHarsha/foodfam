@@ -23,7 +23,7 @@ type ConversationWithDetails = {
 };
 
 const Messages = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const targetUserId = searchParams.get("user");
@@ -241,7 +241,7 @@ const Messages = () => {
     setSending(false);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

@@ -27,7 +27,7 @@ const statusColors = {
 };
 
 const HostDashboard = () => {
-  const { user, roles, loading: authLoading } = useAuth();
+  const { user, roles, authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -99,7 +99,7 @@ const HostDashboard = () => {
   const upcomingBookings = bookings.filter((b) => b.status === "approved");
   const pastBookings = bookings.filter((b) => b.status === "rejected");
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

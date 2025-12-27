@@ -21,7 +21,7 @@ import type { ExperienceType } from "@/types/database";
 
 const CreateExperience = () => {
   const navigate = useNavigate();
-  const { user, roles } = useAuth();
+  const { user, roles, authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -35,27 +35,19 @@ const CreateExperience = () => {
     experience_type: "meal" as ExperienceType,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setLoading(true);
-    const { data, error } = await supabase.from("experiences").insert({
-      host_id: user.id,
-      ...formData,
-      image_url: formData.image_url || null,
-      story: formData.story || null,
-    }).select().single();
-
-    if (error) {
-      toast.error("Failed to create experience");
-      console.error(error);
-    } else {
-      toast.success("Experience created successfully!");
-      navigate(`/experiences/${data.id}`);
-    }
-    setLoading(false);
-  };
+  // Protected route guard: never redirect while auth is still hydrating.
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8 max-w-2xl">
+          <div className="animate-pulse space-y-4">
+            <div className="h-10 bg-muted rounded w-1/2" />
+            <div className="h-64 bg-muted rounded" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!user) {
     navigate("/auth");
