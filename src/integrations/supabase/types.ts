@@ -578,11 +578,19 @@ export type Database = {
         Args: { participant_ids: string[] }
         Returns: string
       }
+      get_user_conversation_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_conversation_participant: {
+        Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
     }
