@@ -34,7 +34,7 @@ const statusLabels = {
 };
 
 const MyTrips = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,9 @@ const MyTrips = () => {
   const [reviewedBookings, setReviewedBookings] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Wait for auth to be checked before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       navigate("/auth");
       return;
@@ -75,7 +78,7 @@ const MyTrips = () => {
     };
 
     fetchBookings();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const upcomingBookings = bookings.filter((b) => 
     b.status === "approved" && (!b.booking_date || !isPast(new Date(b.booking_date)))

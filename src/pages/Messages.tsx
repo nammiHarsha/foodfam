@@ -23,7 +23,7 @@ type ConversationWithDetails = {
 };
 
 const Messages = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const targetUserId = searchParams.get("user");
@@ -38,6 +38,9 @@ const Messages = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Wait for auth to be checked before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       navigate("/auth");
       return;
@@ -133,7 +136,7 @@ const Messages = () => {
     };
 
     fetchConversations();
-  }, [user, navigate, targetUserId]);
+  }, [user, authLoading, navigate, targetUserId]);
 
   const createOrSelectConversation = async (otherUserId: string) => {
     if (!user) return;
