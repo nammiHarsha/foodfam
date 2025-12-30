@@ -169,16 +169,17 @@ const CreateExperience = () => {
                   id="cuisine"
                   value={formData.cuisine_type}
                   onChange={(e) => setFormData({ ...formData, cuisine_type: e.target.value })}
-                  placeholder="e.g., Italian, Thai"
+                  placeholder="e.g., South Indian, Continental"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">Location (Bangalore only for MVP)</Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Rome, Italy"
+                  placeholder="e.g., Koramangala, Bangalore"
+                  defaultValue="Bangalore"
                 />
               </div>
             </div>
@@ -196,12 +197,12 @@ const CreateExperience = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price per Person ($)</Label>
+                <Label htmlFor="price">Price per Person (₹)</Label>
                 <Input
                   id="price"
                   type="number"
                   min={0}
-                  step="0.01"
+                  step="1"
                   value={formData.price_per_person}
                   onChange={(e) => setFormData({ ...formData, price_per_person: parseFloat(e.target.value) })}
                 />

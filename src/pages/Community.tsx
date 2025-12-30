@@ -7,14 +7,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, TrendingUp, Clock } from "lucide-react";
 import PostCard from "@/components/community/PostCard";
 import CreatePostDialog from "@/components/community/CreatePostDialog";
+import GatedContent from "@/components/auth/GatedContent";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
 
 const Community = () => {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"latest" | "popular">("latest");
   const { posts, loading, refetch } = usePosts(sortBy);
+
+  // Show gated content for non-logged users
+  if (!authLoading && !user) {
+    return (
+      <HelmetProvider>
+        <SEOHead
+          title="Community Feed"
+          description="Share your food stories, recipes, and travel memories with the FoodFam community."
+        />
+        <Layout>
+          <GatedContent
+            title="Join the FoodFam Community"
+            description="Login or join FoodFam to share food stories, discover recipes, and connect with food lovers worldwide."
+          />
+        </Layout>
+      </HelmetProvider>
+    );
+  }
 
   return (
     <HelmetProvider>

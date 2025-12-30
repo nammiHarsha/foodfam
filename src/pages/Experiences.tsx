@@ -15,6 +15,7 @@ import {
 import { Plus, Search, MapPin, Users, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import GatedContent from "@/components/auth/GatedContent";
 import type { Experience } from "@/types/database";
 
 const experienceTypeLabels = {
@@ -24,7 +25,7 @@ const experienceTypeLabels = {
 };
 
 const Experiences = () => {
-  const { user, roles } = useAuth();
+  const { user, roles, authLoading } = useAuth();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -34,6 +35,7 @@ const Experiences = () => {
 
   useEffect(() => {
     const fetchExperiences = async () => {
+      // Fetch all active experiences (Bangalore filter for MVP)
       let query = supabase
         .from("experiences")
         .select(`*, host:profiles!experiences_host_profile_fkey(*)`)
@@ -42,13 +44,39 @@ const Experiences = () => {
 
       const { data, error } = await query;
       if (!error) {
-        setExperiences(data as unknown as Experience[] || []);
+        // Filter to Bangalore-based hosts for MVP
+        const bangaloreExperiences = (data || []).filter((exp: any) => {
+          const location = exp.location?.toLowerCase() || "";
+          const hostLocation = exp.host?.location?.toLowerCase() || "";
+          return location.includes("bangalore") || location.includes("bengaluru") || 
+                 hostLocation.includes("bangalore") || hostLocation.includes("bengaluru") ||
+                 !exp.location; // Include experiences without location for now
+        });
+        setExperiences(bangaloreExperiences as unknown as Experience[]);
       }
       setLoading(false);
     };
 
     fetchExperiences();
   }, []);
+
+  // Show gated content for non-logged users
+  if (!authLoading && !user) {
+    return (
+      <HelmetProvider>
+        <SEOHead
+          title="Food Experiences"
+          description="Discover authentic dining experiences, cooking classes, and food festivals hosted by passionate locals."
+        />
+        <Layout>
+          <GatedContent
+            title="Discover Food Experiences"
+            description="Login or join FoodFam to browse authentic culinary adventures, book cooking classes, and connect with local hosts in Bangalore."
+          />
+        </Layout>
+      </HelmetProvider>
+    );
+  }
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesSearch =
@@ -76,7 +104,7 @@ const Experiences = () => {
                 Food Experiences
               </h1>
               <p className="text-muted-foreground">
-                Discover authentic culinary adventures hosted by passionate locals
+                Discover authentic culinary adventures hosted by passionate locals in Bangalore
               </p>
             </div>
             {isHost && (
@@ -204,7 +232,7 @@ const Experiences = () => {
                         </span>
                       </div>
                       <span className="font-semibold">
-                        ${experience.price_per_person || 0}
+                        ₹{experience.price_per_person || 0}
                         <span className="text-muted-foreground font-normal text-sm"> / person</span>
                       </span>
                     </div>

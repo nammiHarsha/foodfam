@@ -22,6 +22,7 @@ import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
 import Admin from "./pages/Admin";
+import AdminPortal from "./pages/AdminPortal";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CommunityGuidelines from "./pages/CommunityGuidelines";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/events/:id/edit" element={<EditEvent />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/x9Qp/manage" element={<AdminPortal />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/community-guidelines" element={<CommunityGuidelines />} />

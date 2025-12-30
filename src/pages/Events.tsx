@@ -12,6 +12,7 @@ import { Calendar, MapPin, Users, Search, Plus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import GatedContent from "@/components/auth/GatedContent";
 
 type EventWithRSVP = {
   id: string;
@@ -30,7 +31,7 @@ type EventWithRSVP = {
 
 
 const Events = () => {
-  const { user, roles } = useAuth();
+  const { user, roles, authLoading } = useAuth();
   const [events, setEvents] = useState<EventWithRSVP[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -132,6 +133,24 @@ const Events = () => {
 
   const upcomingEvents = filteredEvents.filter((e) => !isPast(new Date(e.event_date)));
   const pastEvents = filteredEvents.filter((e) => isPast(new Date(e.event_date)));
+
+  // Show gated content for non-logged users
+  if (!authLoading && !user) {
+    return (
+      <HelmetProvider>
+        <SEOHead
+          title="Community Events | FoodFam"
+          description="Join food festivals, cooking workshops, and community gatherings"
+        />
+        <Layout>
+          <GatedContent
+            title="Join Community Events"
+            description="Login or join FoodFam to discover food festivals, cooking workshops, and community gatherings in Bangalore."
+          />
+        </Layout>
+      </HelmetProvider>
+    );
+  }
 
   if (loading) {
     return (

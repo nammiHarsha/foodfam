@@ -28,6 +28,7 @@ import type { CommunityPost } from "@/types/database";
 import CommentsDialog from "./CommentsDialog";
 import ReportDialog from "./ReportDialog";
 import EditPostDialog from "./EditPostDialog";
+import LikesDialog from "./LikesDialog";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -48,6 +49,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [reportOpen, setReportOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [likesOpen, setLikesOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const isOwner = user?.id === post.author_id;
@@ -181,15 +183,22 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
 
       {/* Actions */}
       <div className="flex items-center gap-4 pt-4 border-t border-border">
-        <button
-          onClick={handleLike}
-          className={`flex items-center gap-2 transition-colors ${
-            liked ? "text-primary" : "text-muted-foreground hover:text-primary"
-          }`}
-        >
-          <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
-          <span className="text-sm font-medium">{likesCount}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1 transition-colors ${
+              liked ? "text-primary" : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
+          </button>
+          <button
+            onClick={() => setLikesOpen(true)}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {likesCount}
+          </button>
+        </div>
 
         <button
           onClick={() => setCommentsOpen(true)}
@@ -212,6 +221,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       <CommentsDialog postId={post.id} open={commentsOpen} onOpenChange={setCommentsOpen} />
       <ReportDialog postId={post.id} open={reportOpen} onOpenChange={setReportOpen} />
       <EditPostDialog post={post} open={editOpen} onOpenChange={setEditOpen} onSuccess={onUpdate} />
+      <LikesDialog postId={post.id} open={likesOpen} onOpenChange={setLikesOpen} likesCount={likesCount} />
       
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
