@@ -87,21 +87,7 @@ const Auth = () => {
 
         if (error) throw error;
 
-        // Assign required role right after signup (must succeed before redirect).
-        if (data.user) {
-          const role = selectedRoles[0];
-          const { error: roleError } = await supabase.from("user_roles").insert({
-            user_id: data.user.id,
-            role,
-          });
-
-          if (roleError) {
-            // Role selection is required for the app; don't proceed signed-in without it.
-            await supabase.auth.signOut();
-            throw new Error(roleError.message || "Failed to assign role. Please try again.");
-          }
-        }
-
+        // Role is auto-assigned via database trigger - no frontend insert needed
         toast.success("Welcome to FoodFam! You're now signed in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
