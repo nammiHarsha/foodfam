@@ -11,6 +11,7 @@ import Community from "./pages/Community";
 import Experiences from "./pages/Experiences";
 import ExperienceDetail from "./pages/ExperienceDetail";
 import CreateExperience from "./pages/CreateExperience";
+import EditExperience from "./pages/EditExperience";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import HostDashboard from "./pages/HostDashboard";
@@ -19,6 +20,7 @@ import Messages from "./pages/Messages";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
+import EditEvent from "./pages/EditEvent";
 import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -42,6 +44,7 @@ const App = () => (
               <Route path="/experiences" element={<Experiences />} />
               <Route path="/experiences/create" element={<CreateExperience />} />
               <Route path="/experiences/:id" element={<ExperienceDetail />} />
+              <Route path="/experiences/:id/edit" element={<EditExperience />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
@@ -52,6 +55,7 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/events/create" element={<CreateEvent />} />
               <Route path="/events/:id" element={<EventDetail />} />
+              <Route path="/events/:id/edit" element={<EditEvent />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />

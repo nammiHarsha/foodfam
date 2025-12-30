@@ -48,7 +48,7 @@ const ExperienceDetail = () => {
 
       const { data, error } = await supabase
         .from("experiences")
-        .select(`*, host:profiles!experiences_host_id_fkey(*)`)
+        .select(`*, host:profiles!experiences_host_profile_fkey(*)`)
         .eq("id", id)
         .maybeSingle();
 
@@ -62,7 +62,7 @@ const ExperienceDetail = () => {
       // Fetch reviews
       const { data: reviewsData } = await supabase
         .from("reviews")
-        .select(`*, reviewer:profiles!reviews_reviewer_id_fkey(*)`)
+        .select(`*, reviewer:profiles!reviews_reviewer_profile_fkey(*)`)
         .eq("experience_id", id)
         .order("created_at", { ascending: false });
 

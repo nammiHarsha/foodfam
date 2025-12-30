@@ -7,7 +7,17 @@ import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, MapPin, Users, Clock, Check, Share2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Calendar, MapPin, Users, Clock, Check, Share2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -37,6 +47,10 @@ const EventDetail = () => {
   const [event, setEvent] = useState<EventWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [rsvping, setRsvping] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOwner = user?.id === event?.host_id;
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -147,6 +161,19 @@ const EventDetail = () => {
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Event link copied to clipboard!");
+  };
+
+  const handleDelete = async () => {
+    if (!event) return;
+    setDeleting(true);
+    const { error } = await supabase.from("events").delete().eq("id", event.id);
+    if (error) {
+      toast.error("Failed to delete event");
+    } else {
+      toast.success("Event deleted");
+      navigate("/events");
+    }
+    setDeleting(false);
   };
 
   const eventIsPast = event ? isPast(new Date(event.event_date)) : false;
@@ -304,6 +331,24 @@ const EventDetail = () => {
                       <Share2 className="h-4 w-4 mr-2" />
                       Share Event
                     </Button>
+                    {isOwner && (
+                      <>
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link to={`/events/${event.id}/edit`}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Event
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => setDeleteOpen(true)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Event
+                        </Button>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -316,6 +361,23 @@ const EventDetail = () => {
             </div>
           </div>
         </div>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Event</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this event? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {deleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Layout>
     </HelmetProvider>
   );

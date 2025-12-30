@@ -36,7 +36,7 @@ const Experiences = () => {
     const fetchExperiences = async () => {
       let query = supabase
         .from("experiences")
-        .select(`*, host:profiles!experiences_host_id_fkey(*)`)
+        .select(`*, host:profiles!experiences_host_profile_fkey(*)`)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 

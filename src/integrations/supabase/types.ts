@@ -80,6 +80,20 @@ export type Database = {
             referencedRelation: "experiences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_guest_profile_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bookings_host_profile_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       community_posts: {
@@ -258,7 +272,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_host_profile_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       experiences: {
         Row: {
@@ -313,7 +335,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "experiences_host_profile_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -530,6 +560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "experiences"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_profile_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
