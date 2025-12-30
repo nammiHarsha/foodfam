@@ -13,9 +13,8 @@ export const usePosts = (sortBy: "latest" | "popular" = "latest") => {
       .from("community_posts")
       .select(`
         *,
-        author:profiles!inner(*)
-      `)
-      .eq("author.user_id", "author_id");
+        author:profiles!community_posts_author_profile_fkey(*)
+      `);
 
     if (sortBy === "popular") {
       query = query.order("likes_count", { ascending: false });
