@@ -251,7 +251,7 @@ const ExperienceDetail = () => {
 
                 {/* Price */}
                 <div className="mb-6">
-                  <span className="text-3xl font-bold">${experience.price_per_person || 0}</span>
+                  <span className="text-3xl font-bold">₹{experience.price_per_person || 0}</span>
                   <span className="text-muted-foreground"> / person</span>
                 </div>
 
@@ -332,12 +332,12 @@ const ExperienceDetail = () => {
 
               <div className="bg-secondary rounded-lg p-4">
                 <div className="flex justify-between mb-2">
-                  <span>${experience.price_per_person} × {bookingData.guests_count} guests</span>
-                  <span>${(experience.price_per_person || 0) * bookingData.guests_count}</span>
+                  <span>₹{experience.price_per_person} × {bookingData.guests_count} guests</span>
+                  <span>₹{(experience.price_per_person || 0) * bookingData.guests_count}</span>
                 </div>
                 <div className="flex justify-between font-semibold border-t pt-2">
                   <span>Total</span>
-                  <span>${(experience.price_per_person || 0) * bookingData.guests_count}</span>
+                  <span>₹{(experience.price_per_person || 0) * bookingData.guests_count}</span>
                 </div>
               </div>
 
