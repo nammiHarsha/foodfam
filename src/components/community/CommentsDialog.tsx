@@ -24,7 +24,7 @@ const CommentsDialog = ({ postId, open, onOpenChange }: CommentsDialogProps) => 
   const fetchComments = async () => {
     const { data } = await supabase
       .from("post_comments")
-      .select(`*, author:profiles!post_comments_author_id_fkey(*)`)
+      .select(`*, author:profiles!post_comments_author_profile_fkey(*)`)
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
     setComments(data as unknown as PostComment[] || []);
