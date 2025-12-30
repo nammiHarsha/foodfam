@@ -487,6 +487,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_count: number | null
+          action_type: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action_count?: number | null
+          action_type: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          action_count?: number | null
+          action_type?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           created_at: string
@@ -625,6 +646,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _action_type: string
+          _max_actions: number
+          _user_id: string
+          _window_minutes: number
+        }
+        Returns: boolean
+      }
       create_conversation_with_participants: {
         Args: { participant_ids: string[] }
         Returns: string
