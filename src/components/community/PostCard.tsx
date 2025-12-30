@@ -1,14 +1,25 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Bookmark, Flag, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Flag, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { usePostInteractions } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +27,7 @@ import { toast } from "sonner";
 import type { CommunityPost } from "@/types/database";
 import CommentsDialog from "./CommentsDialog";
 import ReportDialog from "./ReportDialog";
+import EditPostDialog from "./EditPostDialog";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -34,6 +46,11 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const { liked, saved, likesCount, setLikesCount, checkStatus, toggleLike, toggleSave } = usePostInteractions(post.id);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOwner = user?.id === post.author_id;
 
   useEffect(() => {
     setLikesCount(post.likes_count || 0);
@@ -66,6 +83,20 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
     onUpdate?.();
   };
 
+  const handleDelete = async () => {
+    if (!user || !isOwner) return;
+    setDeleting(true);
+    const { error } = await supabase.from("community_posts").delete().eq("id", post.id);
+    if (error) {
+      toast.error("Failed to delete post");
+    } else {
+      toast.success("Post deleted");
+      onUpdate?.();
+    }
+    setDeleting(false);
+    setDeleteOpen(false);
+  };
+
   return (
     <article className="bg-card rounded-2xl p-6 shadow-warm hover:shadow-warm-lg transition-shadow">
       {/* Author Header */}
@@ -93,6 +124,19 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {isOwner && (
+              <>
+                <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Post
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Post
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={() => setReportOpen(true)}>
               <Flag className="h-4 w-4 mr-2" />
               Report Post
@@ -167,6 +211,24 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
 
       <CommentsDialog postId={post.id} open={commentsOpen} onOpenChange={setCommentsOpen} />
       <ReportDialog postId={post.id} open={reportOpen} onOpenChange={setReportOpen} />
+      <EditPostDialog post={post} open={editOpen} onOpenChange={setEditOpen} onSuccess={onUpdate} />
+      
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 };

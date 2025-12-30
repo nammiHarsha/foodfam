@@ -9,7 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, Check, X, Clock, MessageCircle, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Calendar, Users, Check, X, Clock, MessageCircle, Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -33,6 +43,8 @@ const HostDashboard = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [deleteExpId, setDeleteExpId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Protected route guard: never redirect while auth is still hydrating.
   if (authLoading) {
@@ -71,7 +83,7 @@ const HostDashboard = () => {
         .select(`
           *,
           experience:experiences(*),
-          guest:profiles!bookings_guest_id_fkey(full_name, avatar_url, user_id)
+          guest:profiles!bookings_guest_profile_fkey(full_name, avatar_url, user_id)
         `)
         .eq("host_id", user.id)
         .order("created_at", { ascending: false });
@@ -108,6 +120,20 @@ const HostDashboard = () => {
       ));
     }
     setUpdating(null);
+  };
+
+  const handleDeleteExperience = async () => {
+    if (!deleteExpId) return;
+    setDeleting(true);
+    const { error } = await supabase.from("experiences").delete().eq("id", deleteExpId);
+    if (error) {
+      toast.error("Failed to delete experience");
+    } else {
+      toast.success("Experience deleted");
+      setExperiences(experiences.filter(e => e.id !== deleteExpId));
+    }
+    setDeleting(false);
+    setDeleteExpId(null);
   };
 
   const requestedBookings = bookings.filter((b) => b.status === "requested");
@@ -359,25 +385,42 @@ const HostDashboard = () => {
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {experiences.map((exp) => (
-                      <Link
-                        key={exp.id}
-                        to={`/experiences/${exp.id}`}
-                        className="group bg-card rounded-xl overflow-hidden shadow-warm hover:shadow-warm-lg transition-all"
-                      >
-                        <div className="aspect-video overflow-hidden">
-                          <img
-                            src={exp.image_url || "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600"}
-                            alt={exp.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
+                      <div key={exp.id} className="group bg-card rounded-xl overflow-hidden shadow-warm hover:shadow-warm-lg transition-all">
+                        <Link to={`/experiences/${exp.id}`}>
+                          <div className="aspect-video overflow-hidden">
+                            <img
+                              src={exp.image_url || "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600"}
+                              alt={exp.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        </Link>
                         <div className="p-4">
-                          <h3 className="font-semibold group-hover:text-primary transition-colors">{exp.title}</h3>
+                          <Link to={`/experiences/${exp.id}`}>
+                            <h3 className="font-semibold group-hover:text-primary transition-colors">{exp.title}</h3>
+                          </Link>
                           <p className="text-sm text-muted-foreground mt-1">
                             ${exp.price_per_person}/person · Up to {exp.max_guests} guests
                           </p>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" variant="outline" asChild>
+                              <Link to={`/experiences/${exp.id}/edit`}>
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Edit
+                              </Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => setDeleteExpId(exp.id)}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -385,6 +428,23 @@ const HostDashboard = () => {
             </Tabs>
           </div>
         </div>
+
+        <AlertDialog open={!!deleteExpId} onOpenChange={(open) => !open && setDeleteExpId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Experience</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this experience? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteExperience} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {deleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Layout>
     </HelmetProvider>
   );
