@@ -46,7 +46,8 @@ interface BookingWithDetails {
 }
 
 const Admin = () => {
-  const { user, roles, authLoading } = useAuth();
+  // Auth and role checks are handled by ProtectedRoute wrapper
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -57,17 +58,11 @@ const Admin = () => {
     pendingReports: 0,
   });
 
-  const isAdmin = roles.includes("admin" as any); // Only users with admin role can access
-
   useEffect(() => {
-    if (!isAdmin) {
-      navigate("/");
-      toast.error("Access denied. Admin only.");
-      return;
+    if (user) {
+      fetchData();
     }
-
-    fetchData();
-  }, [isAdmin, navigate]);
+  }, [user]);
 
   const fetchData = async () => {
     // Fetch profiles as users
@@ -150,24 +145,8 @@ const Admin = () => {
     }
   };
 
-  if (authLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4" />
-            <div className="h-64 bg-muted rounded" />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
+  // Auth and loading states are handled by ProtectedRoute wrapper
+  // User is guaranteed to exist and have admin role when this component renders
 
   return (
     <Layout>
