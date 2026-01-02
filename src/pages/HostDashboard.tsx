@@ -37,7 +37,8 @@ const statusColors = {
 };
 
 const HostDashboard = () => {
-  const { user, roles, authLoading } = useAuth();
+  // Auth and role checks are handled by ProtectedRoute wrapper
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -46,37 +47,10 @@ const HostDashboard = () => {
   const [deleteExpId, setDeleteExpId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Protected route guard: never redirect while auth is still hydrating.
-  if (authLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Skeleton className="h-10 w-48" />
-            <div className="grid gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
-
-  if (!roles.includes("host")) {
-    navigate("/");
-    toast.error("You need to be a host to access this page");
-    return null;
-  }
-
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return;
+      
       // Fetch bookings
       const { data: bookingsData } = await supabase
         .from("bookings")
@@ -102,7 +76,7 @@ const HostDashboard = () => {
     };
 
     fetchData();
-  }, [user, roles, authLoading, navigate]);
+  }, [user]);
 
   const updateBookingStatus = async (bookingId: string, status: "approved" | "rejected") => {
     setUpdating(bookingId);

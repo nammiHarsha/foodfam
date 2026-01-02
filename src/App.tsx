@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Community from "./pages/Community";
@@ -50,14 +51,28 @@ const App = () => (
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/settings/profile" element={<Settings />} />
-              <Route path="/host-dashboard" element={<HostDashboard />} />
+              <Route
+                path="/host-dashboard"
+                element={
+                  <ProtectedRoute requiredRole="host">
+                    <HostDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/my-trips" element={<MyTrips />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/create" element={<CreateEvent />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/events/:id/edit" element={<EditEvent />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Admin />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/x9Qp/manage" element={<AdminPortal />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
