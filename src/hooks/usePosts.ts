@@ -55,13 +55,23 @@ export const usePostInteractions = (postId: string) => {
 
   const toggleLike = async (userId: string) => {
     if (liked) {
-      await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId);
-      setLiked(false);
-      setLikesCount((c) => c - 1);
+      const { error } = await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId);
+      if (!error) {
+        // Update count in DB
+        const newCount = Math.max(0, likesCount - 1);
+        await supabase.from("community_posts").update({ likes_count: newCount }).eq("id", postId);
+        setLiked(false);
+        setLikesCount(newCount);
+      }
     } else {
-      await supabase.from("post_likes").insert({ post_id: postId, user_id: userId });
-      setLiked(true);
-      setLikesCount((c) => c + 1);
+      const { error } = await supabase.from("post_likes").insert({ post_id: postId, user_id: userId });
+      if (!error) {
+        // Update count in DB
+        const newCount = likesCount + 1;
+        await supabase.from("community_posts").update({ likes_count: newCount }).eq("id", postId);
+        setLiked(true);
+        setLikesCount(newCount);
+      }
     }
   };
 

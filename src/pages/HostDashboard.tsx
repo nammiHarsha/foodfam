@@ -374,7 +374,7 @@ const HostDashboard = () => {
                             <h3 className="font-semibold group-hover:text-primary transition-colors">{exp.title}</h3>
                           </Link>
                           <p className="text-sm text-muted-foreground mt-1">
-                            ${exp.price_per_person}/person · Up to {exp.max_guests} guests
+                            ₹{exp.price_per_person}/person · Up to {exp.max_guests} guests
                           </p>
                           <div className="flex gap-2 mt-3">
                             <Button size="sm" variant="outline" asChild>

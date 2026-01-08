@@ -13,9 +13,10 @@ interface CommentsDialogProps {
   postId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCommentAdded?: (newCount: number) => void;
 }
 
-const CommentsDialog = ({ postId, open, onOpenChange }: CommentsDialogProps) => {
+const CommentsDialog = ({ postId, open, onOpenChange, onCommentAdded }: CommentsDialogProps) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<PostComment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -50,8 +51,18 @@ const CommentsDialog = ({ postId, open, onOpenChange }: CommentsDialogProps) => 
     if (error) {
       toast.error("Failed to post comment");
     } else {
+      // Update comments count in the post
+      const { data: commentsData } = await supabase
+        .from("post_comments")
+        .select("id")
+        .eq("post_id", postId);
+      
+      const newCount = commentsData?.length || 0;
+      await supabase.from("community_posts").update({ comments_count: newCount }).eq("id", postId);
+      
       setNewComment("");
       fetchComments();
+      onCommentAdded?.(newCount);
       toast.success("Comment posted");
     }
     setLoading(false);

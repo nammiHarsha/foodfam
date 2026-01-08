@@ -46,6 +46,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const { user } = useAuth();
   const { liked, saved, likesCount, setLikesCount, checkStatus, toggleLike, toggleSave } = usePostInteractions(post.id);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
   const [reportOpen, setReportOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -205,7 +206,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
         >
           <MessageCircle className="h-5 w-5" />
-          <span className="text-sm font-medium">{post.comments_count || 0}</span>
+          <span className="text-sm font-medium">{commentsCount}</span>
         </button>
 
         <button
@@ -218,7 +219,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         </button>
       </div>
 
-      <CommentsDialog postId={post.id} open={commentsOpen} onOpenChange={setCommentsOpen} />
+      <CommentsDialog postId={post.id} open={commentsOpen} onOpenChange={setCommentsOpen} onCommentAdded={setCommentsCount} />
       <ReportDialog postId={post.id} open={reportOpen} onOpenChange={setReportOpen} />
       <EditPostDialog post={post} open={editOpen} onOpenChange={setEditOpen} onSuccess={onUpdate} />
       <LikesDialog postId={post.id} open={likesOpen} onOpenChange={setLikesOpen} likesCount={likesCount} />
