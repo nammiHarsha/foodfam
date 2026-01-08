@@ -385,7 +385,7 @@ const ProfilePage = () => {
                             </span>
                           </div>
                           {exp.price_per_person && (
-                            <p className="mt-2 font-semibold">${exp.price_per_person}/person</p>
+                            <p className="mt-2 font-semibold">₹{exp.price_per_person}/person</p>
                           )}
                         </div>
                       </Link>

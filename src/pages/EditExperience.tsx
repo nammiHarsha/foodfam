@@ -235,7 +235,7 @@ const EditExperience = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price per Person ($)</Label>
+                <Label htmlFor="price">Price per Person (₹)</Label>
                 <Input
                   id="price"
                   type="number"
