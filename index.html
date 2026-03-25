@@ -3,24 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- 🔥 SEO + Branding -->
+    <title>GrowthForge AI | AI-Powered Growth Systems</title>
+    <meta name="description" content="We build AI-powered systems that generate leads, sales, and real business growth using websites, SEO, ads, and automation." />
+    <meta name="author" content="Harsha | GrowthForge AI" />
+
+    <!-- 🔥 Open Graph (for sharing) -->
+    <meta property="og:title" content="GrowthForge AI" />
+    <meta property="og:description" content="AI-powered systems to grow your business — websites, SEO, ads, and automation." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- 👉 Replace this later with your own image -->
+    <meta property="og:image" content="https://images.unsplash.com/photo-1555066931-4365d14bab8c" />
 
+    <!-- 🔥 Twitter Preview -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="GrowthForge AI" />
+    <meta name="twitter:description" content="We build systems that generate revenue." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1555066931-4365d14bab8c" />
+
+    <!-- 🔥 Favicon (optional later) -->
+    <link rel="icon" href="/favicon.ico" />
   </head>
 
   <body>
     <div id="root"></div>
+
+    <!-- 🔥 Remove Lovable Badge (Auto cleanup) -->
+    <script>
+      setInterval(() => {
+        const el = document.querySelector('a[href*="lovable"]');
+        if (el) el.remove();
+      }, 1000);
+    </script>
+
+    <!-- App Entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
